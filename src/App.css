@@ -1,0 +1,19 @@
+@import url('./assets/css/game.css');
+
+:root {
+  --white: #fff;
+  --black: #070707;
+  --grey: #3E3E3E;
+  --darker-grey: #0E0E0E;
+  --dark-grey: #161616;
+  --gold: #C5A676;
+  --deep-red: #50091E;
+  --light-red: #E31542;
+  --deep-green: #1A381D;
+  --light-green: #15B452;
+  --deep-blue: #211F4F;
+  --light-blue: #2680EA;
+  --blue: #225EFF;
+}
+
+
