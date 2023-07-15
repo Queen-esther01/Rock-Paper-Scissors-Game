@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import GameRecords from '../components/GameRecords'
 import Position from '../components/Position'
 import { PositionInterface } from '../../utils/interfaces'
@@ -17,7 +17,7 @@ function Game() {
     const [balance, setBalance] = useState<number>(5000)
     const [win, setWin] = useState<number>(0)
     const [amountWon, setamountWon] = useState<number>(0)
-    const [betValue, setbetValue] = useState<number>(500)
+    const [betValue, ] = useState<number>(500)
     const [selectedBets, setSelectedBets] = useState<string[]>([])
 
     const [computerOption, setComputerOption] = useState<string>('');

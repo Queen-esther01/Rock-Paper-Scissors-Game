@@ -1,4 +1,3 @@
-import React, { useState } from 'react'
 import { PositionCardInterface } from '../../utils/interfaces'
 
 function Position({ data, handleSelectBet, selectedBets, computerOption, result, betValue }: PositionCardInterface) {
