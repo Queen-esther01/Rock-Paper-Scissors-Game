@@ -28,10 +28,8 @@ function Game() {
     const [amountWon, setamountWon] = useState<number>(0)
 
     const selectedBetsValues = Object.keys(selectedBets!)
-    console.log(selectedBetsValues)
 
     const handleGamePlay = () => {
-
         //GET COMPUTER CHOICE
         const computerChoice = getRandomChoice<BetChoiceType>(positions)
         setComputerSelection(computerChoice)
