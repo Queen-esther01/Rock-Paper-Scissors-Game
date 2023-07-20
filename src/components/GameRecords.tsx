@@ -1,12 +1,32 @@
-import { GameRecordsInterface } from '../../utils/interfaces'
+import { useContext, useEffect } from "react"
+import { GameContext } from "../App"
 
+type Props = {
+    numberOfRoundsWon: number
+}
 
-function GameRecords({ balance, win, totalValueOfBets }: GameRecordsInterface) {
+function GameRecords({ numberOfRoundsWon }: Props) {
+    const { balance, selectedBets, setBetValue } = useContext(GameContext)
+
+    const selectedBetsAmounts = Object.values(selectedBets!)
+    const totalValueOfBets = selectedBetsAmounts.reduce((a, b) => a + b, 0)
+    
+    useEffect(() => {
+        setBetValue(totalValueOfBets)
+    }, [totalValueOfBets])
+    
+
     return (
-        <div className='game-record-container'>
-            <h2 className='record'>BALANCE: <span>{ balance }</span></h2>
-            <h2 className='record'>BET: <span>{ totalValueOfBets }</span></h2>
-            <h2 className='record'>WIN: <span>{ win }</span></h2>
+        <div className="game-record-container">
+            <h2 className="record">
+                BALANCE: <span>{balance}</span>
+            </h2>
+            <h2 className="record">
+                BET: <span>{totalValueOfBets}</span>
+            </h2>
+            <h2 className="record">
+                WIN: <span>{numberOfRoundsWon}</span>
+            </h2>
         </div>
     )
 }

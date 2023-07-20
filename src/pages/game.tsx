@@ -1,179 +1,157 @@
-import { useEffect, useState } from 'react'
-import GameRecords from '../components/GameRecords'
-import Position from '../components/Position'
-import { PositionInterface } from '../../utils/interfaces'
-import { options, Positions } from '../../utils/gameData'
-import {calculateWin} from '../../utils/calculateWin'
+import { useContext, useEffect, useState } from "react"
+import GameRecords from "../components/GameRecords"
+import BettingPositions from "../components/BettingPositions"
+import { BetChoiceType } from "../types/PositionType"
+import { GameContext } from "../App"
+import { getRandomChoice } from "../helpers/calculateRandomChoice"
+import { calculateRoundReward } from "../helpers/calculateRoundReward"
+import RoundsInformation from "../components/RoundsInformation"
+import { BetResultType } from "../types/BetResultType"
+import { MINIMUM_BETS } from "../constants"
 
-
-
-const getRandomOption = () => {
-    const randomIndex = Math.floor(Math.random() * options.length);
-    return options[randomIndex];
-};
+const positions: BetChoiceType[] = [ "rock", "paper", "scissors" ]
 
 function Game() {
+    const {
+        computerSelection,
+        setComputerSelection,
+        betResult,
+        setBetResult,
+        setSelectedBets,
+        selectedBets,
+        betValue,
+        balance,
+        setBalance,
+    } = useContext(GameContext)
 
-    const [balance, setBalance] = useState<number>(5000)
-    const [win, setWin] = useState<number>(0)
+    const [numberOfRoundsWon, setNumberOfRoundsWon] = useState<number>(0)
     const [amountWon, setamountWon] = useState<number>(0)
-    const [betValue, ] = useState<number>(500)
-    const [selectedBets, setSelectedBets] = useState<string[]>([])
 
-    const [computerOption, setComputerOption] = useState<string>('');
-    const [result, setResult] = useState<string>('');
-    const [winner, setWinner] = useState<string>('')
+    const selectedBetsValues = Object.keys(selectedBets!)
 
-    
-    const handleSelectBet = (data: PositionInterface) => {
-
-        //IF BALANCE IS LESS THAN REQUIRED BET, RETURN
-        if(balance < betValue || winner !== ''){
-            return
-        }
-
-        //IF SELECTED BET ALREADY EXISTS REMOVE IT AND ADD BET BACK TO BALANCE
-        if(selectedBets.includes(data.title)){
-            setBalance(balance => balance + betValue)
-            setSelectedBets(selectedBets.filter((value:string) => value !== data.title))
-            return
-        }
-
-        //IF SELECTED BET DOES NOT EXIST ADD SELECTED BET TO BET STATE
-        if(selectedBets.length < 2){
-            setBalance(balance => balance - betValue)
-            setSelectedBets([
-                ...selectedBets,
-                data.title
-            ])
-        }
-        
-    }
-    // console.log('selected bets: ' + selectedBets)
-
-    // console.log('computer option: ' + computerOption)
-
-
-    
     const handleGamePlay = () => {
+
+        //GET COMPUTER CHOICE
+        const computerChoice = getRandomChoice<BetChoiceType>(positions)
+        setComputerSelection(computerChoice)
+
+        let result:BetResultType = {
+            winnerBetPosition: null,
+            winner: null
+        }
         
-        const computerChoice = getRandomOption();
-        setComputerOption(computerChoice);
-
         //PLAY ROCK PAPER SCISSORS AND DERIVE WINNING MOVE
-        if(selectedBets.includes(computerChoice)){
-            console.log('It is a tie')
-            setResult('TIE')
+        if ("rock" in selectedBets! && computerChoice === "scissors" ) {
+            result.winnerBetPosition = "rock"
+        } 
+        else if ("paper" in selectedBets! && computerChoice === "rock") {
+            result.winnerBetPosition = "paper"
         }
-        else if(
-            (selectedBets.includes('ROCK') && computerChoice === 'SCISSORS') || 
-            (selectedBets.includes('PAPER') && computerChoice === 'ROCK') || 
-            (selectedBets.includes('SCISSORS') && computerChoice === 'PAPER')
-        ){
-            if((selectedBets.includes('ROCK') && computerChoice === 'SCISSORS')){
-                setResult('ROCK')
-            }
-            else if(selectedBets.includes('PAPER') && computerChoice === 'ROCK'){
-                setResult('PAPER')
-            }
-            else if(selectedBets.includes('SCISSORS') && computerChoice === 'PAPER'){
-                setResult('SCISSORS')
-            }
-            console.log('I win')
+        else if ("scissors" in selectedBets! && computerChoice === "paper") {
+            result.winnerBetPosition = "scissors"
         }
-        else{
-            console.log('Computer wins')
-            setResult(computerChoice)
+        else if (computerChoice in selectedBets!) {
+            result.winnerBetPosition = "tie"
+        }
+        else {
+            result.winnerBetPosition = computerChoice
         }
 
+        setBetResult(result)
     }
 
 
     useEffect(() => {
         //MAKE CALCULATIONS BASED ON WINNER & NUMBER OF BETS PLACED
-        let winnerResult: number | undefined
-        if(result){
-            winnerResult = setTimeout(() => {
-                const { amountWon, balanceAddition } = calculateWin(betValue, selectedBets, result)
-                if(result === 'TIE'){
-                    setWinner('TIE')
-                    setBalance(balance => balance + balanceAddition)
+        let timeout: number | undefined
+        if (betResult?.winnerBetPosition !== null) {
+            timeout = setTimeout(() => {
+                let result:BetResultType = {
+                    ...betResult!,
+                    winner: null
                 }
-                else if(selectedBets.includes(result)){
-                    setWin(win => win  + 1)
+
+                const { amountWon } = calculateRoundReward(selectedBets, betResult!, betValue )
+
+                if (betResult?.winnerBetPosition === "tie") {
+                    result.winner = "Tie"
+                    setBalance(balance + amountWon)
+                } 
+                else if (betResult?.winnerBetPosition! in selectedBets!) {
+                    setNumberOfRoundsWon((numberOfWins) => numberOfWins + 1)
                     setamountWon(amountWon)
-                    setBalance(balance => balance + balanceAddition)
-                    setWinner('Player')
+                    setBalance(balance + amountWon)
+                    result.winner = "Player"
+                } else {
+                    result.winner = "Computer"
                 }
-                else{
-                    setWinner('Computer')
-                }
-            }, 2000);
+
+                setBetResult(result)
+            }, 2000)
         }
-        return () => clearTimeout(winnerResult)
-    }, [result])
-    //console.log(winner)
-    
+        return () => clearTimeout(timeout)
+    }, [betResult?.winnerBetPosition])
+
 
     const handleClearRound = () => {
-        setResult('')
-        setSelectedBets([])
-        setComputerOption('')
+        setBetResult({
+            winnerBetPosition: null,
+            winner: null
+        })
+        setSelectedBets({})
+        setComputerSelection(null)
         setamountWon(0)
-        setWinner('')
     }
 
-    
+    const hasWinner = betResult?.winner !== null
+    const hasComputerSelected = computerSelection !== null
+    const hasWinnerPosition = betResult?.winnerBetPosition !== null
+    const defaultState = !hasComputerSelected && !hasWinnerPosition && !betResult?.winner
+    const totalWinnerResultAvailable = betResult?.winner && betResult?.winnerBetPosition
+  
     return (
         <>
-            <div className='game-body'>
-                <main className='game-container'>
-                    <GameRecords balance={balance} win={win} totalValueOfBets={betValue * selectedBets.length} />
-                    <div className='game-area'>
-                        { 
-                            computerOption === '' && 
-                            result === '' && !winner &&
-                            <h2 className='instruction'>PICK YOUR POSITIONS</h2> 
+            <div className="game-body">
+                <main className="game-container">
+                    <GameRecords numberOfRoundsWon={numberOfRoundsWon} />
+                    <div className="game-area">
+                        {
+                            defaultState && ( <h2 className="instruction">PICK YOUR POSITIONS</h2> )
                         }
                         {
-                            computerOption && !winner &&
-                            <div className='playing-positions-container'>
-                                <h2 className='playing-positions'>{ computerOption }</h2>
-                                <span className='vs-text'>VS</span> 
-                                <h2 className='playing-positions'>{ selectedBets[selectedBets.length - 1]}</h2>
-                            </div>
+                            computerSelection && !betResult?.winner && (
+                            <div className="playing-positions-container">
+                                <h2 className="playing-positions">
+                                    {betResult?.winnerBetPosition! === 'tie' ? computerSelection!.toUpperCase() : selectedBetsValues.length < MINIMUM_BETS ? selectedBetsValues[0].toUpperCase() : ''}
+                                </h2>
+                                <span className="vs-text">VS</span>
+                                <h2 className="playing-positions">
+                                    {computerSelection.toUpperCase()}
+                                </h2>
+                            </div>)
                         }
                         {
-                            winner &&
-                            <div className='winner-result-container'>
-                                <h2 className='winner'>{ winner === 'TIE' ? 'IT IS A TIE' : `${result} WON` }</h2>
-                                <h3 className='winner-info'>
-                                    { 
-                                        winner === 'TIE' 
-                                        ? 'NO WINNER OR LOSER' 
-                                        : <>YOU {winner === 'Player' ? 'WIN' : 'LOSE'} <span>{ winner === 'Player' ? amountWon : betValue }</span> </>
-                                    }
-                                    
-                                </h3>
-                            </div>
-                        }
-                        <div className='position-container'>
-                            {
-                                Positions.map((data:PositionInterface) => (
-                                    <Position 
-                                        key={data.key} 
-                                        data={data} 
-                                        handleSelectBet={handleSelectBet}
-                                        selectedBets={selectedBets}
-                                        computerOption={computerOption}
-                                        result={result}
-                                        betValue={betValue}
-                                    />
-                                ))
-                            }
-                        </div>
-                        { winner === '' && <button disabled={!selectedBets.length || result !== ''} onClick={handleGamePlay} className={`${result && 'disabled-button'} button`}>PLAY</button>}
-                        { winner !== '' && <button onClick={handleClearRound} className='button'>CLEAR</button>}
+                            totalWinnerResultAvailable && (
+                            <RoundsInformation amountWon={amountWon}/>
+                        )}
+
+                        {/* SHOW BETTING CARDS */}
+                        <BettingPositions
+                            positions={positions}
+                            computerSelection={computerSelection}
+                        />
+
+                        {/* SHOW PLAY BUTTON IF NO WINNER ELSE SHOW CLEAR BUTTON */}
+                        {!hasWinner && (
+                            <button disabled={!Object.keys(selectedBets!).length || betResult.winnerBetPosition !== null} onClick={handleGamePlay} className={`${ betResult.winnerBetPosition ? "disabled-button": "" } button`}>
+                                PLAY
+                            </button>
+                        )}
+                        {hasWinner && (
+                            <button onClick={handleClearRound} className="button" >
+                                CLEAR
+                            </button>
+                        )}
                     </div>
                 </main>
             </div>
