@@ -1,0 +1,1 @@
+export type WinnerType = "Computer" | "Player" | "Tie" | null
