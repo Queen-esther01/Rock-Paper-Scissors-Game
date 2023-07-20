@@ -30,7 +30,6 @@ function Game() {
     const selectedBetsValues = Object.keys(selectedBets!)
 
     const handleGamePlay = () => {
-
         //GET COMPUTER CHOICE
         const computerChoice = getRandomChoice<BetChoiceType>(positions)
         setComputerSelection(computerChoice)
@@ -108,6 +107,11 @@ function Game() {
     const hasWinnerPosition = betResult?.winnerBetPosition !== null
     const defaultState = !hasComputerSelected && !hasWinnerPosition && !betResult?.winner
     const totalWinnerResultAvailable = betResult?.winner && betResult?.winnerBetPosition
+    //IF POSITION IS TIE, USE COMPUTER SELECTED POSITION, ELSE IF USER SELECTED BETS ARE LESS THAN 2, USE SELECTED BET, ELSE JUST USE USUAL SELECTED POSITION
+    // I AM USING THIS TO DETERMINE THE APPROPRIATE USER BET TO DISPLAY
+    const userSelectedBet = betResult?.winnerBetPosition! === 'tie' ? computerSelection!.toUpperCase() 
+        : selectedBetsValues.length < MINIMUM_BETS ? selectedBetsValues.length && selectedBetsValues[0]!.toUpperCase() 
+        : betResult?.winnerBetPosition && betResult?.winnerBetPosition!.toUpperCase()
   
     return (
         <>
@@ -122,7 +126,7 @@ function Game() {
                             computerSelection && !betResult?.winner && (
                             <div className="playing-positions-container">
                                 <h2 className="playing-positions">
-                                    {betResult?.winnerBetPosition! === 'tie' ? computerSelection!.toUpperCase() : selectedBetsValues.length < MINIMUM_BETS ? selectedBetsValues[0].toUpperCase() : ''}
+                                    {userSelectedBet}
                                 </h2>
                                 <span className="vs-text">VS</span>
                                 <h2 className="playing-positions">
