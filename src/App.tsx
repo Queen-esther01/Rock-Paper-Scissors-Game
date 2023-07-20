@@ -1,8 +1,8 @@
 import { createContext, useState } from "react"
 import "./App.css"
-import Game from "./pages/Game"
 import { BetChoiceType, PositionType } from "./types/PositionType"
 import { BetResultType } from "./types/BetResultType"
+import Game from "./pages/Game"
 
 
 type ContextValues = {
